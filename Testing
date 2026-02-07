@@ -1,0 +1,80 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Remove old GUI
+pcall(function()
+    player.PlayerGui.RemoteExplorer:Destroy()
+end)
+
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "RemoteExplorer"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 500, 0, 450)
+frame.Position = UDim2.new(0.5, -250, 0.5, -225)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,40)
+title.Text = "Remote Event Explorer"
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 20
+title.BackgroundTransparency = 1
+title.Parent = frame
+
+local scroll = Instance.new("ScrollingFrame")
+scroll.Position = UDim2.new(0,10,0,50)
+scroll.Size = UDim2.new(1,-20,1,-60)
+scroll.CanvasSize = UDim2.new(0,0,0,0)
+scroll.ScrollBarImageTransparency = 0.2
+scroll.BackgroundTransparency = 1
+scroll.Parent = frame
+
+local layout = Instance.new("UIListLayout", scroll)
+layout.Padding = UDim.new(0,6)
+
+local function makeButton(remote)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1,0,0,32)
+    b.BackgroundColor3 = Color3.fromRGB(40,40,50)
+    b.TextColor3 = Color3.new(1,1,1)
+    b.TextWrapped = true
+    b.Font = Enum.Font.Gotham
+    b.TextSize = 14
+    b.Text = remote:GetFullName()
+    b.BorderSizePixel = 0
+    b.Parent = scroll
+
+    b.MouseButton1Click:Connect(function()
+        local ok,err = pcall(function()
+            remote:FireServer()
+        end)
+
+        if ok then
+            b.Text = "FIRED → " .. remote.Name
+        else
+            b.Text = "FAILED → " .. remote.Name
+        end
+    end)
+end
+
+-- Scan all remotes
+for _,obj in ipairs(game:GetDescendants()) do
+    if obj:IsA("RemoteEvent") then
+        makeButton(obj)
+    end
+end
+
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 10)
+end)
+
+print("Remote Explorer Loaded")
