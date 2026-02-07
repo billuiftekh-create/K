@@ -1,0 +1,85 @@
+-- Remote Event GUI Explorer & Activator
+-- Paste into CLIENT dev console
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+
+-- Cleanup old GUI
+if player.PlayerGui:FindFirstChild("RemoteEventGUI") then
+    player.PlayerGui.RemoteEventGUI:Destroy()
+end
+
+-- GUI Setup
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "RemoteEventGUI"
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.fromScale(0.45, 0.6)
+frame.Position = UDim2.fromScale(0.275, 0.2)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,25)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+
+local corner = Instance.new("UICorner", frame)
+corner.CornerRadius = UDim.new(0,14)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.fromScale(1, 0.1)
+title.Text = "Remote Event Activator"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+title.BackgroundTransparency = 1
+
+local scroll = Instance.new("ScrollingFrame", frame)
+scroll.Size = UDim2.fromScale(0.96, 0.85)
+scroll.Position = UDim2.fromScale(0.02, 0.12)
+scroll.CanvasSize = UDim2.new(0,0,0,0)
+scroll.ScrollBarImageTransparency = 0.2
+scroll.BackgroundTransparency = 1
+
+local layout = Instance.new("UIListLayout", scroll)
+layout.Padding = UDim.new(0,6)
+
+-- Button Generator
+local function createButton(remote)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -6, 0, 36)
+    btn.Text = remote:GetFullName()
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 14
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,45)
+    btn.BorderSizePixel = 0
+    btn.Parent = scroll
+
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+
+    btn.MouseButton1Click:Connect(function()
+        pcall(function()
+            remote:FireServer()
+            btn.Text = "FIRED: " .. remote.Name
+        end)
+    end)
+end
+
+-- Scan for RemoteEvents
+local function scan(parent)
+    for _,obj in ipairs(parent:GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            createButton(obj)
+        end
+    end
+end
+
+scan(game)
+
+-- Auto canvas resizing
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scroll.CanvasSize = UDim2.new(0,0,0, layout.AbsoluteContentSize.Y + 10)
+end)
+
+print("Remote Event GUI Loaded")
